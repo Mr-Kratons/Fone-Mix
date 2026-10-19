@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FoneMix</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--tx:#14171c;--mu:#6b7280;--ac:#e5342b;--bd:#d9dce1;--ok:#16a34a;box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1114;--card:#1a1d22;--tx:#eef0f3;--mu:#98a0ab;--bd:#2c3037}}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.wrap{max-width:520px;margin:0 auto;padding:16px}
+.screen{display:none}.screen.on{display:block}
+h1{font-size:1.25rem;margin:8px 0 4px}
+.sub{color:var(--mu);font-size:.9rem;margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:12px}
+input[type=text],input[type=password],input[type=number],select{width:100%;padding:12px;font-size:1rem;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}
+button{font:inherit;cursor:pointer}
+.btn{width:100%;padding:14px;border:0;border-radius:10px;background:var(--ac);color:#fff;font-weight:600;font-size:1rem;margin-top:12px}
+.btn.sec{background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.top h1{flex:1;margin:0}
+.dot{width:12px;height:12px;border-radius:50%;background:#aaa}.dot.ok{background:var(--ok)}.dot.err{background:var(--ac)}
+.small{padding:8px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:.85rem}
+.gh{font-weight:700;margin-bottom:10px}
+.pbtn{display:block;width:100%;text-align:left;padding:16px;margin-bottom:8px;font-size:1.1rem;font-weight:600;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}
+.pbtn:active{background:var(--ac);color:#fff}
+.row{padding:12px 0;border-bottom:1px solid var(--bd)}.row:last-child{border:0}
+.row .l{display:flex;justify-content:space-between;font-size:.95rem;margin-bottom:6px}
+.row .l b{font-weight:600}.row .l span{color:var(--mu);font-variant-numeric:tabular-nums}
+.master{border:2px solid var(--ac);border-radius:14px;padding:14px;background:var(--card);margin-bottom:12px}
+.ml{display:flex;justify-content:space-between;margin-bottom:6px}.ml span{color:var(--mu)}
+.ctl{display:flex;gap:6px;align-items:center}
+.sl{position:relative;flex:1;height:48px;margin:0 14px;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:pointer}
+.sl:before{content:"";position:absolute;left:0;right:0;top:19px;height:10px;border-radius:5px;background:var(--bd)}
+.sl .fill{position:absolute;left:0;top:19px;height:10px;border-radius:5px;background:var(--ac);pointer-events:none}
+.sl .knob{position:absolute;top:10px;width:28px;height:28px;margin-left:-14px;border-radius:50%;background:#fff;border:3px solid var(--ac);box-shadow:0 1px 4px rgba(0,0,0,.35);pointer-events:none}
+.pm{flex:none;width:44px;height:44px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:1.4rem;line-height:1}
+.pm:active{background:var(--ac);color:#fff}
+body.locked .ctl{opacity:.35}
+.msg{color:var(--ac);font-size:.85rem;min-height:1.2em;margin-top:8px}
+.msg.ok{color:var(--ok)}
+.note{color:var(--mu);font-size:.8rem;margin-top:8px}
+.prow{display:flex;gap:8px;margin-bottom:8px}.grow{flex:1;text-align:left}
+.cfgm{border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
+.chs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chs label{display:flex;align-items:center;gap:4px;font-size:.8rem;padding:5px 8px;border:1px solid var(--bd);border-radius:8px}
+.two{display:grid;grid-template-columns:2fr 1fr;gap:8px}
+label.f{display:block;font-size:.8rem;color:var(--mu);margin:12px 0 6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- 1. IP -->
+<section class="screen" id="s-ip">
+  <h1>🎚️ FoneMix</h1>
+  <p class="sub">Conecte no Wi-Fi da mesa Soundcraft Ui e digite o IP. O modelo é detectado sozinho.</p>
+  <div class="card">
+    <input id="ip" type="text" inputmode="decimal" placeholder="192.168.1.100" autocomplete="off">
+    <button class="btn" id="ipgo">Conectar</button>
+    <div class="msg" id="ipmsg"></div>
+    <div class="note" id="httpnote"></div>
+  </div>
+</section>
+
+<!-- 2. Escolher fone / perfil -->
+<section class="screen" id="s-who">
+  <div class="top"><h1>Escolha seu perfil</h1><span class="dot" id="dot1"></span><button class="small" id="gear">⚙︎</button></div>
+  <p class="sub" id="info"></p>
+  <div class="card" id="pinbox" style="display:none">
+    <input id="pin" type="password" inputmode="numeric" placeholder="PIN do sonoplasta">
+    <button class="btn" id="pingo" style="margin-top:8px">Entrar na configuração</button>
+    <div class="msg" id="pinmsg"></div>
+  </div>
+  <div id="groups"></div>
+</section>
+
+<!-- 3. Criar perfil -->
+<section class="screen" id="s-new">
+  <div class="top"><h1>Criar perfil</h1><button class="small" id="nback">Voltar</button></div>
+  <div class="card">
+    <label class="f" style="margin-top:0">Seu nome</label>
+    <input id="nname" type="text" placeholder="Ex.: João (bateria)" maxlength="30" autocomplete="off">
+    <label class="f">Qual fone você usa?</label>
+    <select id="naux"></select>
+    <button class="btn" id="ncreate">Criar perfil</button>
+    <div class="msg" id="nmsg"></div>
+    <div class="note">O perfil guarda o seu mix. Ao criar, o mix que está agora na mesa neste fone vira o ponto de partida. Depois é só ajustar.</div>
+  </div>
+</section>
+
+<!-- 4. Mix -->
+<section class="screen" id="s-mix">
+  <div class="top"><h1 id="mname"></h1><span class="dot" id="dot2"></span><button class="small" id="lock">🔓 Travar</button><button class="small" id="swap">Trocar</button></div>
+  <div class="master"><div class="ml"><b>🎧 Volume do meu fone</b><span id="mv"></span></div><div id="mslot"></div></div>
+  <div class="card">
+    <b>Predefinições</b>
+    <div id="plist" style="margin-top:10px"></div>
+    <div class="prow" style="margin-top:10px"><input id="pname" type="text" placeholder="Nome (ex.: Domingo)" maxlength="30"><button class="small" id="psave">💾 Salvar</button></div>
+    <div class="msg" id="pmsg"></div>
+    <div class="note">Seu mix atual também é guardado automaticamente neste perfil.</div>
+  </div>
+  <div class="prow"><button class="small grow" id="showall">Mostrar todos os canais</button></div>
+  <div class="card" id="chans"></div>
+</section>
+
+<!-- 5. Configuração -->
+<section class="screen" id="s-cfg">
+  <div class="top"><h1>⚙︎ Configuração</h1><button class="small" id="cfgback">Voltar</button></div>
+  <div id="cfgbody"></div>
+</section>
+
+</div>
+
+<script>
+var $=function(i){return document.getElementById(i)};
+var KEY="fones-ui16-cfg2";
+/* O modelo (Ui12, Ui16 ou Ui24R) é detectado ao conectar; daí saem a lista de canais e a quantidade de fones */
+var model="", modelStr="", NAUX=6, CHANNELS=[];
+function buildChannels(m){
+  model=m;
+  var ni=m==="ui24"?24:(m==="ui12"?8:12);
+  NAUX=m==="ui24"?10:(m==="ui12"?4:6);
+  CHANNELS=[];for(var i=0;i<ni;i++)CHANNELS.push("i."+i);
+  CHANNELS.push("l.0","l.1","p.0","p.1","f.0","f.1","f.2","f.3");
+}
+buildChannels("ui16");
+/* Curva real do fader da Ui (de -100 dB a +10 dB, de 1 em 1 dB), extraída da biblioteca soundcraft-ui-connection */
+var FVALS=[0.00126941502,0.0014193058,0.00158625841,0.00177210569,0.0019787848,0.00220842659,0.00246331096,0.00274592638,0.00305891037,0.00340510905,0.00378751755,0.00420932472,0.00467389822,0.00518476963,0.00574563444,0.00636033714,0.00703287125,0.00776734948,0.00856804848,0.00943937898,0.01038584113,0.01141215861,0.01252317429,0.01372399926,0.01501996815,0.0164167881,0.01792064309,0.01953828335,0.02127727866,0.02314623445,0.02515518665,0.02731607854,0.02964346856,0.03215561062,0.03487607837,0.0378363952,0.04108065367,0.04467409104,0.04872117192,0.05341050774,0.05882352591,0.06435465068,0.06995738298,0.07563393563,0.08138664067,0.08721791208,0.09313031286,0.09912653267,0.10520938411,0.11138185114,0.11764705926,0.12400831282,0.13046910241,0.13703311235,0.14370423928,0.15048661083,0.15738460608,0.16440286487,0.17154632322,0.17882022634,0.18623016588,0.19378209766,0.20148238726,0.20933783613,0.21735573001,0.22554387664,0.23391066305,0.24246510724,0.25121692196,0.26017658552,0.26935542002,0.27876567934,0.28842064831,0.29833475361,0.30852368847,0.31900455104,0.32979600201,0.34091843711,0.35239418154,0.3642477016,0.37650583661,0.3891980492,0.40235668444,0.41601723386,0.43021858274,0.44500321534,0.46041733201,0.47651080892,0.49333689432,0.51095148548,0.5294117647,0.54877388978,0.56908935658,0.59039960429,0.61272849748,0.63607261766,0.66038997821,0.685588922,0.7115203609,0.73797742761,0.76470588235,0.79142552969,0.81785840681,0.84375627202,0.86892029358,0.89320951837,0.91653908203,0.93887176758,0.96020686568,0.98056922374,1];
+function dbToVal(db){
+  if(db===-Infinity)return 0;
+  if(db>=10)return 1;
+  if(db<=-100)return FVALS[0];
+  var i=Math.floor(db+100),f=db+100-i;
+  return FVALS[i]+(FVALS[i+1]-FVALS[i])*f;
+}
+function valToDb(v){
+  if(v<=0.0005)return -Infinity;
+  if(v<=FVALS[0])return -100;
+  if(v>=1)return 10;
+  for(var i=1;i<FVALS.length;i++){
+    if(FVALS[i]>=v){var f=(v-FVALS[i-1])/(FVALS[i]-FVALS[i-1]);return Math.round((-100+i-1+f)*10)/10}
+  }
+  return 10;
+}
+function valToText(v){
+  var d=valToDb(v||0);
+  if(d===-Infinity)return "-∞ dB";
+  return (Number.isInteger(d)?d:d.toFixed(1))+" dB";
+}
+function chName(ch){
+  var n=names[ch+".name"];if(n)return n;
+  var t=ch.split(".")[0],k=+ch.split(".")[1];
+  if(t==="i")return "Canal "+(k+1);
+  if(t==="f")return "FX "+(k+1);
+  if(t==="l")return "Line In "+(k?"R":"L");
+  return "Player "+(k?"R":"L");
+}
+var cfg=loadCfg();
+if(cfg.model)buildChannels(cfg.model);
+var ws=null,hb=null,rt=null,shouldConnect=false,ready=false,readyT=null,lastErr="",lastClose="",t0=0;
+var showAll=false,vals={},names={},dragging=null,cur=null,lastSend={},snapT=null;
+
+function allCh(){return CHANNELS.slice()}
+function defCfg(){return {v:3,ip:"",pin:"1234",maxDb:10,sens:0.5,numAux:5,last:-1,musicians:[]}}
+function migrate(c){
+  var oldV=c.v||0;c.v=3;
+  var base=CHANNELS.slice(0,16),fx=CHANNELS.slice(16);
+  if(!c.numAux)c.numAux=5;
+  if(typeof c.maxDb!=="number")c.maxDb=10;
+  if(typeof c.sens!=="number")c.sens=0.5;
+  var old=["i.0","i.1","i.2","i.3","i.4","i.5","i.6","i.7","i.8","i.9","i.10","i.11","l.0","l.1","p.0","p.1"];
+  c.musicians.forEach(function(m){
+    m.ch=(m.ch||[]).map(function(x){return typeof x==="number"?old[x]:x}).filter(function(x){return /^[ilpf]\.\d+$/.test(x)});
+    if(oldV<3&&base.every(function(x){return m.ch.indexOf(x)>-1})){fx.forEach(function(x){if(m.ch.indexOf(x)<0)m.ch.push(x)})}
+    if(m.snap){Object.keys(m.snap).forEach(function(k){if(!/^a\.\d+\.mix$/.test(k)&&!/^[ilpf]\.\d+\.aux\.\d+\.value$/.test(k))delete m.snap[k]})}
+  });
+  return c;
+}
+function loadCfg(){try{var c=JSON.parse(localStorage.getItem(KEY));if(c&&c.musicians){return migrate(c)}}catch(e){}return defCfg()}
+function saveCfg(){try{localStorage.setItem(KEY,JSON.stringify(cfg))}catch(e){}}
+function show(id){["s-ip","s-who","s-new","s-mix","s-cfg"].forEach(function(s){$(s).classList.toggle("on",s===id)});window.scrollTo(0,0)}
+function setDots(c){["dot1","dot2"].forEach(function(d){$(d).className="dot "+c})}
+function isOn(id){return $(id).classList.contains("on")}
+
+/* ---------- conexão com a mesa (ws://IP, sem caminho) ---------- */
+function connect(){
+  shouldConnect=true;clearTimeout(rt);
+  try{if(ws){ws.onclose=null;ws.close()}}catch(e){}
+  setDots("");lastErr="";lastClose="";t0=Date.now();
+  try{ws=new WebSocket("ws://"+cfg.ip)}catch(e){lastErr="o navegador bloqueou a conexão ("+(e&&e.name||"erro")+"). Abra este arquivo no Chrome, e não dentro do app do Claude.";$("ipmsg").textContent="Falha: "+lastErr;return}
+  ws.onopen=function(){setDots("ok");clearInterval(hb);hb=setInterval(function(){send("3:::ALIVE")},1000)};
+  ws.onmessage=function(ev){onData(String(ev.data))};
+  ws.onerror=function(){setDots("err");lastErr="a conexão com a mesa deu erro"};
+  ws.onclose=function(ev){setDots("err");lastClose="fechou com código "+(ev&&ev.code)+(ev&&ev.reason?" ("+ev.reason+")":"")+" após "+(Date.now()-t0)+" ms";lastErr=lastErr||"a mesa fechou a conexão";clearInterval(hb);if(shouldConnect)rt=setTimeout(connect,2000)};
+}
+function send(t){if(ws&&ws.readyState===1)ws.send(t)}
+function setD(path,v){send("3:::SETD^"+path+"^"+v)}
+
+/* Ao conectar, a mesa envia sozinha todo o estado: níveis, nomes dos canais e dos fones. */
+function onData(d){
+  if(d.indexOf("3:::")!==0)return;
+  var changedNames=false;
+  d.split("\n").forEach(function(line){
+    var m=line.indexOf("3:::")===0?line.slice(4):line;
+    var p=m.split("^"),c=p[0];
+    if(c==="SETD"){vals[p[1]]=parseFloat(p[2]);refreshSlider(p[1])}
+    else if(c==="SETS"&&p[1]==="model"){modelStr=p[2]}
+    else if(c==="SETS"&&/\.name$/.test(p[1])&&names[p[1]]!==p[2]){names[p[1]]=p[2];changedNames=true}
+  });
+  if(changedNames&&!dragging){
+    if(cur&&isOn("s-mix"))renderMix();
+    else if(isOn("s-who"))renderWho();
+  }
+  if(!ready&&!readyT&&Object.keys(vals).length){
+    $("ipmsg").style.color="var(--ok)";$("ipmsg").textContent="Mesa encontrada. Lendo nomes e níveis…";
+    readyT=setTimeout(function(){ready=true;startFlow()},1500);
+  }
+}
+
+/* ---------- modelo da mesa e fones visíveis ---------- */
+function applyModel(){
+  var m=(modelStr||"").toLowerCase();
+  if(m.indexOf("24")>-1)m="ui24";else if(m.indexOf("16")>-1)m="ui16";else if(m.indexOf("12")>-1)m="ui12";
+  else m=vals["i.23.aux.0.value"]!==undefined?"ui24":(vals["i.8.aux.0.value"]!==undefined?"ui16":"ui12");
+  var prev=cfg.model;buildChannels(m);
+  if(prev!==m){
+    var base=["i.0","i.1","i.2","i.3","i.4","i.5","i.6","i.7","i.8","i.9","i.10","i.11","l.0","l.1","p.0","p.1"];
+    cfg.musicians.forEach(function(mu){
+      var all=base.every(function(x){return mu.ch.indexOf(x)>-1});
+      mu.ch=all?CHANNELS.slice():mu.ch.filter(function(x){return CHANNELS.indexOf(x)>-1});
+    });
+    cfg.model=m;cfg.auxOn=null;
+  }
+  initAux();saveCfg();
+}
+function initAux(){
+  if(cfg.auxOn)return;
+  var on=[];
+  for(var a=0;a<NAUX;a++){var nm=(names["a."+a+".name"]||"").trim();if(nm&&!/^aux\s*\d+$/i.test(nm))on.push(a)}
+  cfg.musicians.forEach(function(mu){if(mu.aux<NAUX&&on.indexOf(mu.aux)<0)on.push(mu.aux)});
+  if(!on.length)for(var b=0;b<NAUX;b++)on.push(b);
+  on.sort(function(x,y){return x-y});cfg.auxOn=on;
+}
+function auxList(){
+  var l=(cfg.auxOn||[]).filter(function(a){return a<NAUX});
+  if(!l.length){l=[];for(var a=0;a<NAUX;a++)l.push(a)}
+  return l;
+}
+
+/* ---------- fluxo ---------- */
+function startFlow(){
+  if(!isOn("s-ip"))return;
+  applyModel();
+  $("ipmsg").textContent="";$("ipmsg").style.color="";
+  if(cfg.musicians[cfg.last])openMix(cfg.last);else{renderWho();show("s-who")}
+}
+function resetLink(){ready=false;clearTimeout(readyT);readyT=null;vals={};names={};modelStr=""}
+$("ipgo").onclick=function(){
+  var v=$("ip").value.trim().replace(/^https?:\/\//i,"").replace(/\/.*$/,"");
+  if(!/^[a-z0-9.\-]+(:\d+)?$/i.test(v)){$("ipmsg").style.color="";$("ipmsg").textContent="Digite um IP válido, ex.: 192.168.1.100";return}
+  cfg.ip=v;saveCfg();resetLink();$("ipmsg").style.color="";$("ipmsg").textContent="Conectando…";connect();
+  failCheck(v);
+};
+
+
+/* Relatório técnico mostrado junto do erro, para identificar exatamente o que está bloqueando */
+function techInfo(){
+  var ua=(typeof navigator!=="undefined"&&navigator.userAgent)||"";var m=ua.match(/Chrome\/([\d.]+)/);
+  var l=["Página aberta em: "+String(location.href).slice(0,90),
+    "Contexto seguro: "+((typeof window!=="undefined"&&window.isSecureContext)?"sim":"não"),
+    "Navegador: "+(m?"Chrome "+m[1]:ua.slice(0,60)),
+    "Conexão: "+(lastClose||lastErr||"sem retorno"),
+    "Modelo detectado: "+(modelStr||"-")];
+  return '<div style="margin-top:10px;font-size:.75rem;color:var(--mu);word-break:break-all"><b>Relatório técnico</b><br>'+l.map(esc).join("<br>")+'</div>';
+}
+/* Se a mesa não responder, descobre se o IP é alcançável por HTTP para dizer qual é o problema */
+function failCheck(v){
+  setTimeout(function(){
+    if(!isOn("s-ip")||Object.keys(vals).length)return;
+    var ctl=typeof AbortController!=="undefined"?new AbortController():null;
+    var tm=setTimeout(function(){if(ctl)ctl.abort()},4000);
+    var out=$("ipmsg");out.style.color="";
+    fetch("http://"+v+"/",{mode:"no-cors",cache:"no-store",signal:ctl?ctl.signal:undefined}).then(function(){
+      clearTimeout(tm);
+      out.innerHTML="A mesa em <b>"+v+"</b> <b>respondeu</b>, então a rede está certa. Só a conexão em tempo real não abriu ("+(lastErr||"sem retorno")+"). Página aberta via <b>"+location.protocol+"</b>. Tente abrir este arquivo direto pelo Chrome (Downloads), e não por outro app."+techInfo();
+    }).catch(function(){
+      clearTimeout(tm);
+      out.innerHTML="O celular <b>não alcança "+v+"</b>. Confira: <br>1) Wi-Fi da mesa conectado; <br>2) o IP certo (veja no painel da mesa); <br>3) <b>desligue os dados móveis</b> e a opção de trocar automaticamente do Wi-Fi sem internet para os dados móveis. Como esse Wi-Fi não tem internet, o Android costuma mandar o tráfego pelos dados móveis, e a mesa some."+techInfo();
+    });
+  },6000);
+}
+function auxLabel(a){return "Fone "+(a+1)+(names["a."+a+".name"]?" · "+names["a."+a+".name"]:"")}
+function mkAdd(a){var b=document.createElement("button");b.className="small";b.textContent="+ Criar perfil";b.onclick=function(){openNew(a)};return b}
+function renderWho(){
+  var nn=Object.keys(names).filter(function(k){return /^[ilpf]\.\d+\.name$/.test(k)}).length;
+  var al=auxList();
+  var mn=model==="ui24"?"Ui24R":(model==="ui16"?"Ui16":"Ui12");
+  $("info").textContent="Mesa "+mn+" conectada · "+CHANNELS.length+" canais · "+nn+" nomes lidos · "+al.length+" fones";
+  var g=$("groups");g.innerHTML="";
+  al.forEach(function(a){
+    var box=document.createElement("div");box.className="card";
+    var h=document.createElement("div");h.className="gh";h.textContent="🎧 "+auxLabel(a);box.appendChild(h);
+    var any=false;
+    cfg.musicians.forEach(function(m,i){
+      if(m.aux!==a)return;any=true;
+      var b=document.createElement("button");b.className="pbtn";b.textContent=m.name;
+      b.onclick=function(){cfg.last=i;saveCfg();openMix(i)};box.appendChild(b);
+    });
+    if(!any){var e=document.createElement("div");e.className="note";e.style.marginBottom="10px";e.textContent="Nenhum perfil neste fone ainda.";box.appendChild(e)}
+    box.appendChild(mkAdd(a));g.appendChild(box);
+  });
+}
+
+/* ---------- criar perfil ---------- */
+function openNew(a){
+  var s=$("naux");s.innerHTML="";
+  auxList().forEach(function(i){var o=document.createElement("option");o.value=i;o.textContent=auxLabel(i);if(i===a)o.selected=true;s.appendChild(o)});
+  $("nname").value="";$("nmsg").textContent="";show("s-new");
+}
+$("nback").onclick=function(){renderWho();show("s-who")};
+$("ncreate").onclick=function(){
+  var n=$("nname").value.trim().slice(0,30),a=+$("naux").value;
+  if(!n){$("nmsg").textContent="Digite o seu nome.";return}
+  var dup=cfg.musicians.some(function(m){return m.aux===a&&m.name.toLowerCase()===n.toLowerCase()});
+  if(dup){$("nmsg").textContent="Já existe um perfil com esse nome neste fone.";return}
+  cfg.musicians.push({name:n,aux:a,ch:allCh(),snap:null,presets:[]});
+  cfg.last=cfg.musicians.length-1;saveCfg();openMix(cfg.last);
+};
+
+/* ---------- mix ---------- */
+function myPaths(m){var p=["a."+m.aux+".mix"];m.ch.forEach(function(c){p.push(c+".aux."+m.aux+".value")});return p}
+function cap(){return dbToVal(cfg.maxDb)}
+function applySnap(m){
+  var paths=myPaths(m);
+  if(!m.snap){m.snap={};paths.forEach(function(p){m.snap[p]=vals[p]||0});saveCfg();return}
+  paths.forEach(function(p){
+    if(m.snap[p]===undefined)return;
+    var v=Math.min(m.snap[p],cap());vals[p]=v;setD(p,v.toFixed(4));
+  });
+}
+function snapSave(path,v){
+  if(!cur)return;cur.snap=cur.snap||{};cur.snap[path]=v;
+  clearTimeout(snapT);snapT=setTimeout(saveCfg,400);
+}
+function openMix(i){
+  cur=cfg.musicians[i];showAll=false;applySnap(cur);
+  $("mname").textContent="🎧 "+cur.name;$("pmsg").textContent="";$("pname").value="";
+  renderMix();show("s-mix");
+}
+$("showall").onclick=function(){showAll=!showAll;renderMix()};
+$("lock").onclick=function(){
+  locked=!locked;document.body.classList.toggle("locked",locked);
+  $("lock").textContent=locked?"🔒 Travado":"🔓 Travar";
+};
+$("swap").onclick=function(){cur=null;cfg.last=-1;saveCfg();renderWho();show("s-who")};
+function pct(v){return valToText(v)}
+var locked=false;
+function stepDb(v,dir){
+  var d=valToDb(v||0);
+  if(dir>0){d=(d===-Infinity)?-60:Math.min(10,Math.floor(d)+1)}
+  else{if(d===-Infinity)return 0;d=Math.ceil(d)-1;if(d<-60)return 0}
+  return dbToVal(d);
+}
+/* Fader por arrasto relativo: tocar não faz o valor pular, só arrastar na horizontal muda,
+   e o movimento é reduzido pela sensibilidade. Rolar a tela na vertical não mexe no volume. */
+function mkSlider(path,onVal){
+  var wrap=document.createElement("div");wrap.className="ctl";
+  var minus=document.createElement("button");minus.className="pm";minus.textContent="−";
+  var plus=document.createElement("button");plus.className="pm";plus.textContent="+";
+  var el=document.createElement("div");el.className="sl";el.dataset.path=path;
+  var fill=document.createElement("div");fill.className="fill";
+  var knob=document.createElement("div");knob.className="knob";
+  el.appendChild(fill);el.appendChild(knob);
+  el.setV=function(v){v=Math.max(0,Math.min(1,v||0));fill.style.width=(v*100)+"%";knob.style.left=(v*100)+"%"};
+  el.setV(vals[path]);
+  var tmr=null;
+  function commit(v){
+    if(locked)return;
+    v=Math.max(0,Math.min(cap(),v));v=Math.round(v*10000)/10000;
+    vals[path]=v;el.setV(v);onVal(v);snapSave(path,v);
+    var now=Date.now();if(now-(lastSend[path]||0)>50){lastSend[path]=now;setD(path,v.toFixed(4))}
+    clearTimeout(tmr);tmr=setTimeout(function(){setD(path,v.toFixed(4))},80);
+  }
+  var st=null;
+  el.addEventListener("pointerdown",function(e){st={x:e.clientX,y:e.clientY,v:vals[path]||0,on:false}});
+  el.addEventListener("pointermove",function(e){
+    if(!st)return;
+    var dx=e.clientX-st.x,dy=e.clientY-st.y;
+    if(!st.on){
+      if(Math.abs(dx)>10&&Math.abs(dx)>Math.abs(dy)*1.5){st.on=true;st.x=e.clientX;st.v=vals[path]||0;dragging=path;try{el.setPointerCapture(e.pointerId)}catch(_){}}
+      else return;
+    }
+    commit(st.v+(e.clientX-st.x)/(el.clientWidth||300)*(cfg.sens||0.5));
+  });
+  var end=function(){st=null;dragging=null};
+  el.addEventListener("pointerup",end);el.addEventListener("pointercancel",end);el.addEventListener("lostpointercapture",end);
+  minus.onclick=function(){commit(stepDb(vals[path],-1))};
+  plus.onclick=function(){commit(stepDb(vals[path],1))};
+  wrap.appendChild(minus);wrap.appendChild(el);wrap.appendChild(plus);
+  return wrap;
+}
+function renderMix(){
+  if(!cur)return;
+  var mp="a."+cur.aux+".mix";
+  var slot=$("mslot");slot.innerHTML="";
+  slot.appendChild(mkSlider(mp,function(v){$("mv").textContent=pct(v)}));$("mv").textContent=pct(vals[mp]);
+  var box=$("chans");box.innerHTML="";
+  var list=showAll?CHANNELS:cur.ch;
+  $("showall").textContent=showAll?"Mostrar só os meus canais":"Mostrar todos os canais ("+CHANNELS.length+")";
+  list.forEach(function(ch){
+    var path=ch+".aux."+cur.aux+".value";
+    var row=document.createElement("div");row.className="row";
+    var l=document.createElement("div");l.className="l";
+    var b=document.createElement("b");b.textContent=chName(ch);
+    var sp=document.createElement("span");sp.textContent=pct(vals[path]);sp.dataset.for=path;
+    l.appendChild(b);l.appendChild(sp);row.appendChild(l);
+    row.appendChild(mkSlider(path,function(v){sp.textContent=pct(v)}));box.appendChild(row);
+  });
+  if(!list.length)box.textContent="Nenhum canal liberado para este perfil.";
+  renderPresets();
+}
+function refreshSlider(path){
+  if(!cur||dragging===path)return;
+  var s=document.querySelector('.sl[data-path="'+path+'"]');if(!s)return;
+  s.setV(vals[path]);
+  if(path==="a."+cur.aux+".mix")$("mv").textContent=pct(vals[path]);
+  else{var sp=document.querySelector('span[data-for="'+path+'"]');if(sp)sp.textContent=pct(vals[path])}
+}
+
+/* ---------- predefinições do perfil ---------- */
+function pmsg(t,ok){$("pmsg").className="msg"+(ok?" ok":"");$("pmsg").textContent=t}
+function renderPresets(){
+  var box=$("plist");box.innerHTML="";var l=cur.presets||[];
+  if(!l.length){var n=document.createElement("div");n.className="note";n.style.margin="0";n.textContent="Nenhuma predefinição salva.";box.appendChild(n);return}
+  l.forEach(function(p,i){
+    var r=document.createElement("div");r.className="prow";
+    var b=document.createElement("button");b.className="small grow";b.textContent=p.name;b.onclick=function(){loadPreset(i)};
+    var d=document.createElement("button");d.className="small";d.textContent="🗑";
+    d.onclick=function(){
+      if(d.dataset.c){cur.presets.splice(i,1);saveCfg();renderPresets()}
+      else{d.dataset.c="1";d.textContent="Excluir?";setTimeout(function(){d.dataset.c="";d.textContent="🗑"},3000)}
+    };
+    r.appendChild(b);r.appendChild(d);box.appendChild(r);
+  });
+}
+$("psave").onclick=function(){
+  var n=$("pname").value.trim().slice(0,30);
+  if(!n){pmsg("Digite um nome para a predefinição.");return}
+  var data={};myPaths(cur).forEach(function(p){data[p]=vals[p]||0});
+  cur.presets=cur.presets||[];
+  var ex=-1;cur.presets.forEach(function(x,i){if(x.name.toLowerCase()===n.toLowerCase())ex=i});
+  if(ex>-1)cur.presets[ex].data=data;
+  else{if(cur.presets.length>=20){pmsg("Limite de 20 predefinições.");return}cur.presets.push({name:n,data:data})}
+  saveCfg();$("pname").value="";renderPresets();pmsg("Predefinição \""+n+"\" salva ✔",true);
+};
+function loadPreset(i){
+  if(locked){pmsg("Destrave o fone para carregar.");return}
+  var pr=cur.presets[i],ok=myPaths(cur);cur.snap=cur.snap||{};
+  Object.keys(pr.data).forEach(function(p){
+    if(ok.indexOf(p)<0)return;
+    var v=Math.min(pr.data[p],cap());vals[p]=v;cur.snap[p]=v;setD(p,v.toFixed(4));
+  });
+  saveCfg();renderMix();pmsg("Predefinição \""+pr.name+"\" carregada ✔",true);
+}
+
+/* ---------- configuração (PIN) ---------- */
+$("gear").onclick=function(){var b=$("pinbox");b.style.display=b.style.display==="none"?"block":"none";$("pinmsg").textContent="";$("pin").value=""};
+$("pingo").onclick=function(){
+  if($("pin").value!==cfg.pin){$("pinmsg").textContent="PIN incorreto.";return}
+  $("pinbox").style.display="none";renderCfg();show("s-cfg");
+};
+$("cfgback").onclick=function(){collect();saveCfg();renderWho();show("s-who")};
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;")}
+function renderCfg(){
+  var h='<p class="sub">Escolha quais fones aparecem para os músicos e, se quiser, os canais que cada perfil enxerga.</p>';
+  h+='<label class="f" style="margin-top:0">Fones que aparecem</label><div class="chs" id="auxs">';
+  for(var x=0;x<NAUX;x++)h+='<label><input type="checkbox" class="ax" value="'+x+'"'+(auxList().indexOf(x)>-1?' checked':'')+'> '+esc(auxLabel(x))+'</label>';
+  h+='</div>';
+  h+='<label class="f">Volume máximo permitido nos fones, em dB (proteção auditiva; +10 = sem limite)</label><input type="number" id="cmax" min="-40" max="10" step="0.5" value="'+cfg.maxDb+'">';
+  h+='<label class="f">Sensibilidade do toque nos faders</label><select id="csens">'+[["1","Normal"],["0.5","Suave (recomendado)"],["0.25","Muito suave"]].map(function(o){return '<option value="'+o[0]+'"'+(String(cfg.sens)===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join("")+'</select>';
+  h+='<label class="f">Novo PIN</label><input type="password" id="cpin" value="'+esc(cfg.pin)+'">';
+  h+='<label class="f">Perfis</label>';
+  if(!cfg.musicians.length)h+='<div class="note">Nenhum perfil criado ainda.</div>';
+  cfg.musicians.forEach(function(m,i){
+    h+='<div class="cfgm" data-i="'+i+'"><div class="two"><input type="text" class="cn" value="'+esc(m.name)+'"><select class="ca">';
+    for(var a=0;a<NAUX;a++)h+='<option value="'+a+'"'+(m.aux===a?' selected':'')+'>'+esc(auxLabel(a))+'</option>';
+    h+='</select></div><div class="chs">';
+    CHANNELS.forEach(function(c){
+      h+='<label><input type="checkbox" class="cc" value="'+c+'"'+(m.ch.indexOf(c)>-1?' checked':'')+'> '+esc(chName(c))+'</label>';
+    });
+    h+='</div><button class="small" style="margin-top:10px" data-del="'+i+'">Excluir perfil</button></div>';
+  });
+  h+='<button class="btn" id="csave">Salvar</button><button class="btn sec" id="cip">Trocar IP da mesa</button><div class="msg" id="cmsg"></div>';
+  $("cfgbody").innerHTML=h;
+  $("csave").onclick=function(){collect();saveCfg();$("cmsg").className="msg ok";$("cmsg").textContent="Salvo ✔"};
+  $("cip").onclick=function(){collect();saveCfg();shouldConnect=false;try{ws&&ws.close()}catch(e){}resetLink();$("ip").value=cfg.ip;show("s-ip")};
+  [].forEach.call($("cfgbody").querySelectorAll("[data-del]"),function(b){
+    b.onclick=function(){
+      if(b.dataset.c){collect();cfg.musicians.splice(+b.dataset.del,1);cfg.last=-1;saveCfg();renderCfg()}
+      else{b.dataset.c="1";b.textContent="Toque de novo para excluir";setTimeout(function(){b.dataset.c="";b.textContent="Excluir perfil"},3000)}
+    };
+  });
+}
+function collect(){
+  if(!$("auxs"))return;
+  var on=[].map.call($("cfgbody").querySelectorAll(".ax:checked"),function(c){return +c.value});if(on.length)cfg.auxOn=on;
+  var mx=parseFloat($("cmax").value);cfg.maxDb=isNaN(mx)?10:Math.max(-40,Math.min(10,mx));
+  var pn=$("cpin").value;if(pn)cfg.pin=pn;
+  var sv=parseFloat($("csens").value);if(!isNaN(sv))cfg.sens=sv;
+  [].forEach.call($("cfgbody").querySelectorAll(".cfgm"),function(el){
+    var m=cfg.musicians[+el.dataset.i];if(!m)return;
+    m.name=el.querySelector(".cn").value.trim()||"Sem nome";
+    var na=+el.querySelector(".ca").value;if(na!==m.aux){m.snap=null;m.aux=na}
+    m.ch=[].map.call(el.querySelectorAll(".cc:checked"),function(c){return c.value});
+  });
+}
+
+/* ---------- início ---------- */
+if(location.protocol==="https:"){
+  $("httpnote").textContent="Atenção: esta página está em HTTPS e o navegador vai bloquear a conexão com a mesa. Abra este arquivo localmente ou hospede-o em HTTP na rede da igreja.";
+}
+$("ip").value=cfg.ip;
+show("s-ip");
+if(cfg.ip){$("ipmsg").textContent="Conectando…";connect();failCheck(cfg.ip)}
+</script>
+</body>
+</html>
