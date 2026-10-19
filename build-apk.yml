@@ -1,0 +1,87 @@
+name: Gerar APK do FoneMix
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Preparar o projeto
+        run: |
+          test -f index.html || { echo "ERRO: o arquivo index.html nao esta no repositorio"; exit 1; }
+          mkdir -p www
+          cp index.html www/index.html
+          cat > package.json <<'JSON'
+          {
+            "name": "fonemix",
+            "version": "1.0.0",
+            "private": true,
+            "dependencies": {
+              "@capacitor/android": "^6.2.0",
+              "@capacitor/core": "^6.2.0"
+            },
+            "devDependencies": {
+              "@capacitor/cli": "^6.2.0"
+            }
+          }
+          JSON
+          cat > capacitor.config.json <<'JSON'
+          {
+            "appId": "br.igreja.fonemix",
+            "appName": "FoneMix",
+            "webDir": "www",
+            "server": {
+              "androidScheme": "http",
+              "cleartext": true
+            },
+            "android": {
+              "allowMixedContent": true
+            }
+          }
+          JSON
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Criar projeto Android
+        run: npx cap add android
+
+      - name: Gerar os icones do app
+        continue-on-error: true
+        run: |
+          if [ -f icon-only.png ] && [ -f icon-foreground.png ] && [ -f icon-background.png ]; then
+            mkdir -p assets
+            cp icon-only.png icon-foreground.png icon-background.png assets/
+            npm install --no-save @capacitor/assets@3
+            npx capacitor-assets generate --android
+          else
+            echo "Icones nao encontrados: o app usara o icone padrao."
+          fi
+
+      - name: Copiar o app para o projeto Android
+        run: npx cap sync android
+
+      - name: Compilar o APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Guardar o APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: FoneMix-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
